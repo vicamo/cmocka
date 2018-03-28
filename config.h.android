@@ -155,7 +155,7 @@
 #undef HAVE_MSVC_THREAD_LOCAL_STORAGE
 
 /* Check if we have CLOCK_REALTIME for clock_gettime() */
-#define HAVE_CLOCK_GETTIME_REALTIME 1
+#define HAVE_CLOCK_REALTIME 1
 
 /*************************** ENDIAN *****************************/
 
