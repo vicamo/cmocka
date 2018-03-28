@@ -1952,10 +1952,10 @@ static const ListNode* check_point_allocated_blocks(void) {
 
 /* Display the blocks allocated after the specified check point.  This
  * function returns the number of blocks displayed. */
-static int display_allocated_blocks(const ListNode * const check_point) {
+static size_t display_allocated_blocks(const ListNode * const check_point) {
     const ListNode * const head = get_allocated_blocks_list();
     const ListNode *node;
-    int allocated_blocks = 0;
+    size_t allocated_blocks = 0;
     assert_non_null(check_point);
     assert_non_null(check_point->next);
 
@@ -1964,14 +1964,14 @@ static int display_allocated_blocks(const ListNode * const check_point) {
             (const MallocBlockInfo*)node->value;
         assert_non_null(block_info);
 
-        if (!allocated_blocks) {
+        if (allocated_blocks == 0) {
             cm_print_error("Blocks allocated...\n");
         }
         cm_print_error(SOURCE_LOCATION_FORMAT ": note: block %p allocated here\n",
                        block_info->location.file,
                        block_info->location.line,
                        block_info->block);
-        allocated_blocks ++;
+        allocated_blocks++;
     }
     return allocated_blocks;
 }
@@ -1997,10 +1997,10 @@ static void free_allocated_blocks(const ListNode * const check_point) {
 /* Fail if any any blocks are allocated after the specified check point. */
 static void fail_if_blocks_allocated(const ListNode * const check_point,
                                      const char * const test_name) {
-    const int allocated_blocks = display_allocated_blocks(check_point);
-    if (allocated_blocks) {
+    const size_t allocated_blocks = display_allocated_blocks(check_point);
+    if (allocated_blocks > 0) {
         free_allocated_blocks(check_point);
-        cm_print_error("ERROR: %s leaked %d block(s)\n", test_name,
+        cm_print_error("ERROR: %s leaked %zu block(s)\n", test_name,
                        allocated_blocks);
         exit_test(1);
     }
@@ -2871,10 +2871,16 @@ int _cmocka_run_group_tests(const char *group_name,
                         break;
                 }
             } else {
+                char err_msg[2048] = {0};
+
+                snprintf(err_msg, sizeof(err_msg),
+                         "Could not run test: %s",
+                         cmtest->error_message);
+
                 cmprintf(PRINTF_TEST_ERROR,
                          test_number,
                          cmtest->test->name,
-                         "Could not run the test - check test fixtures");
+                         err_msg);
                 total_errors++;
             }
         }
@@ -3167,7 +3173,7 @@ int _run_group_tests(const UnitTest * const tests, const size_t number_of_tests)
     const char *setup_name;
     size_t num_setups = 0;
     UnitTestFunction teardown = NULL;
-    const char *teardown_name;
+    const char *teardown_name = NULL;
     size_t num_teardowns = 0;
     size_t current_test = 0;
     size_t i;
